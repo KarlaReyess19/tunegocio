@@ -1,0 +1,95 @@
+.customers-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.customers-container {
+  background-color: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.customers-toolbar {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.badge-total-debt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: var(--danger);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+}
+
+.badge-total-debt b {
+  font-size: 1rem;
+}
+
+.customers-table th {
+  background-color: #f8fafc;
+}
+
+.customer-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-brand), #60a5fa);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.customer-name {
+  font-weight: 500;
+}
+
+.phone-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.action-btn.pay:hover:not(:disabled) {
+  color: var(--success);
+}
+
+.action-btn.pay:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.action-btn.history:hover {
+  color: var(--primary-brand);
+}

@@ -1,0 +1,56 @@
+.sales-history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sales-container {
+  background-color: var(--surface-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sales-toolbar {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.method-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.method-badge.efectivo {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.method-badge.tarjeta {
+  background-color: #eff6ff;
+  color: var(--primary-brand);
+  border-color: #bfdbfe;
+}
+
+.method-badge.fiado {
+  background-color: #fffbeb;
+  color: var(--warning);
+  border-color: #fde68a;
+}
