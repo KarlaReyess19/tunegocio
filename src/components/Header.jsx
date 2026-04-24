@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bell, Search, User, LogOut, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
@@ -6,6 +7,7 @@ import './Header.css';
 const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
@@ -39,7 +41,10 @@ const Header = () => {
           
           {isProfileOpen && (
             <div className="profile-dropdown">
-              <div className="dropdown-item">
+              <div className="dropdown-item" onClick={() => {
+                navigate('/settings');
+                setIsProfileOpen(false);
+              }}>
                 <Settings size={16} />
                 <span>Configuración</span>
               </div>

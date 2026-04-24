@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Store, Globe, Shield, Bell, Save, CheckCircle } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { db, auth } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import './Settings.css';
 
@@ -10,6 +11,7 @@ const Settings = () => {
   const [activeTab, setActiveTab] = useState('negocio');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [success, setSuccess] = useState(false);
   const [shopSettings, setShopSettings] = useState({
     shopName: '',
@@ -62,6 +64,19 @@ const Settings = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!user?.email) return;
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      setResetSent(true);
+      alert(`Se ha enviado un correo a ${user.email} para restablecer tu contraseña.`);
+      setTimeout(() => setResetSent(false), 5000);
+    } catch (error) {
+      console.error("Error sending reset email:", error);
+      alert("No se pudo enviar el correo de recuperación.");
+    }
+  };
+
   if (loading) return <div className="loading">Cargando configuración...</div>;
 
   return (
@@ -80,22 +95,10 @@ const Settings = () => {
             <Store size={18} /> Negocio
           </div>
           <div 
-            className={`tab ${activeTab === 'preferencias' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('preferencias')}
-          >
-            <Globe size={18} /> Preferencias
-          </div>
-          <div 
             className={`tab ${activeTab === 'seguridad' ? 'active' : ''}`} 
             onClick={() => setActiveTab('seguridad')}
           >
             <Shield size={18} /> Seguridad
-          </div>
-          <div 
-            className={`tab ${activeTab === 'notificaciones' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('notificaciones')}
-          >
-            <Bell size={18} /> Notificaciones
           </div>
         </div>
 
@@ -154,41 +157,33 @@ const Settings = () => {
             </section>
           )}
 
-          {activeTab === 'preferencias' && (
-            <section className="settings-section">
-              <h3>Preferencias del Sistema</h3>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Idioma</label>
-                  <select 
-                    value={shopSettings.language}
-                    onChange={(e) => setShopSettings({...shopSettings, language: e.target.value})}
-                  >
-                    <option value="es">Español</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-          )}
-
           {activeTab === 'seguridad' && (
             <section className="settings-section">
               <h3>Seguridad de la Cuenta</h3>
               <div className="account-info">
-                <p><strong>Correo vinculado:</strong> {user?.email}</p>
-                <p><strong>ID de Usuario:</strong> {user?.uid}</p>
-                <button type="button" className="btn-outline" style={{ marginTop: '1rem' }}>
-                  Cambiar Contraseña
-                </button>
+                <div className="info-row">
+                  <strong>Correo vinculado:</strong> <span>{user?.email}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Estado:</strong> <span className="status-badge">Verificado</span>
+                </div>
+                
+                <div className="security-action">
+                  <h4>¿Quieres cambiar tu contraseña?</h4>
+                  <p>Te enviaremos un enlace seguro a tu correo electrónico para que puedas crear una nueva contraseña.</p>
+                  <button 
+                    type="button" 
+                    className="btn-outline" 
+                    onClick={handleResetPassword}
+                    disabled={resetSent}
+                  >
+                    {resetSent ? '¡Correo Enviado!' : 'Enviar correo de recuperación'}
+                  </button>
+                  {resetSent && (
+                    <p className="success-msg">Revisa tu bandeja de entrada (y la carpeta de spam).</p>
+                  )}
+                </div>
               </div>
-            </section>
-          )}
-
-          {activeTab === 'notificaciones' && (
-            <section className="settings-section">
-              <h3>Notificaciones</h3>
-              <p style={{ color: 'var(--text-secondary)' }}>Esta funcionalidad estará disponible próximamente.</p>
             </section>
           )}
 

@@ -1,3 +1,6 @@
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Minus, X, CreditCard, Banknote, UserPlus, CheckCircle } from 'lucide-react';
+import { collection, onSnapshot, addDoc, doc, runTransaction, query, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useShop } from '../../context/ShopContext';
