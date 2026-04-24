@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useShop } from '../../context/ShopContext';
 import { formatCurrency } from '../../utils/formatters';
 import Modal from '../../components/Modal';
+import CustomerForm from '../../components/forms/CustomerForm';
 import './POS.css';
 
 
@@ -17,6 +18,7 @@ const POS = () => {
   const [customers, setCustomers] = useState([]);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState(false);
   const { user } = useAuth();
@@ -160,6 +162,24 @@ const POS = () => {
   const selectCustomer = (customer) => {
     setSelectedCustomer(customer);
     setIsCustomerModalOpen(false);
+  };
+
+  const handleQuickAddCustomer = async (customerData) => {
+    try {
+      const docRef = await addDoc(collection(db, 'customers'), {
+        ...customerData,
+        ownerId: user.uid,
+        lastPurchase: 'Recién registrado',
+        createdAt: new Date().toISOString()
+      });
+      // Select the newly created customer
+      setSelectedCustomer({ id: docRef.id, ...customerData });
+      setIsNewCustomerModalOpen(false);
+      setIsCustomerModalOpen(false);
+    } catch (error) {
+      console.error("Error adding customer: ", error);
+      alert("Error al guardar el cliente");
+    }
   };
 
   if (saleSuccess) {
@@ -312,8 +332,14 @@ const POS = () => {
         title="Seleccionar Cliente"
       >
         <div className="customer-picker-list">
-          <div className="picker-search">
-            <input type="text" placeholder="Buscar cliente..." />
+          <div className="picker-header">
+            <div className="picker-search">
+              <input type="text" placeholder="Buscar cliente..." />
+            </div>
+            <button className="btn-primary" onClick={() => setIsNewCustomerModalOpen(true)}>
+              <Plus size={18} />
+              <span>Nuevo</span>
+            </button>
           </div>
           {customers.map(c => (
             <div key={c.id} className="picker-item" onClick={() => selectCustomer(c)}>
@@ -327,6 +353,17 @@ const POS = () => {
             </div>
           ))}
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={isNewCustomerModalOpen}
+        onClose={() => setIsNewCustomerModalOpen(false)}
+        title="Registrar Nuevo Cliente"
+      >
+        <CustomerForm 
+          onSubmit={handleQuickAddCustomer} 
+          onCancel={() => setIsNewCustomerModalOpen(false)} 
+        />
       </Modal>
     </div>
   );

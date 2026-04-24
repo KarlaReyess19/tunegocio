@@ -353,8 +353,15 @@
   padding: 0.5rem;
 }
 
+.picker-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
 .picker-search {
-  margin-bottom: 1rem;
+  flex: 1;
 }
 
 .picker-search input {

@@ -24,6 +24,7 @@ const Customers = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Efectivo');
   const { user } = useAuth();
   const { shopSettings } = useShop();
 
@@ -102,6 +103,12 @@ const Customers = () => {
     if (!paymentAmount || isNaN(paymentAmount)) return;
 
     const amount = parseFloat(paymentAmount);
+    
+    if (amount > selectedCustomer.debtBalance) {
+      alert(`El abono no puede ser mayor a la deuda actual (${formatCurrency(selectedCustomer.debtBalance, shopSettings.currency)})`);
+      return;
+    }
+
     const newBalance = Math.max(0, selectedCustomer.debtBalance - amount);
 
     try {
@@ -109,8 +116,10 @@ const Customers = () => {
         debtBalance: newBalance
       });
       // Optionally register this as a transaction in a 'payments' collection
+      // containing: amount, paymentMethod, date, customerId
       setIsPaymentModalOpen(false);
       setPaymentAmount('');
+      setPaymentMethod('Efectivo');
       setSelectedCustomer(null);
     } catch (error) {
       console.error("Error updating balance: ", error);
@@ -275,11 +284,24 @@ const Customers = () => {
               className="form-control" 
               placeholder="0.00" 
               step="0.01"
+              max={selectedCustomer?.debtBalance}
               required
               autoFocus
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(e.target.value)}
             />
+          </div>
+
+          <div className="form-group">
+            <label>Método de Pago</label>
+            <select 
+              className="form-control"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+            >
+              <option value="Efectivo">Efectivo</option>
+              <option value="Tarjeta">Tarjeta / Transferencia</option>
+            </select>
           </div>
 
           <div className="modal-actions">
