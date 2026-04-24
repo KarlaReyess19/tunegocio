@@ -23,6 +23,8 @@ const Inventory = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { user } = useAuth();
   const { shopSettings } = useShop();
 
@@ -49,9 +51,13 @@ const Inventory = () => {
     return () => unsubscribe();
   }, []);
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const categories = ['Todas', ...new Set(products.map(p => p.category?.trim()).filter(Boolean))];
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'Todas' || product.category?.trim() === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const handleAddProduct = async (productData) => {
     try {
@@ -124,10 +130,36 @@ const Inventory = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-outline">
-            <Filter size={18} />
-            <span>Filtros</span>
-          </button>
+          <div className="filter-container">
+            <button 
+              className={`btn-outline ${selectedCategory !== 'Todas' ? 'active' : ''}`}
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              <Filter size={18} />
+              <span>{selectedCategory === 'Todas' ? 'Filtros' : selectedCategory}</span>
+            </button>
+            
+            {isFilterOpen && (
+              <div className="filter-dropdown">
+                {categories.length > 0 ? (
+                  categories.map(cat => (
+                    <div 
+                      key={cat} 
+                      className={`filter-option ${selectedCategory === cat ? 'active' : ''}`}
+                      onClick={() => {
+                        setSelectedCategory(cat);
+                        setIsFilterOpen(false);
+                      }}
+                    >
+                      {cat}
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-options">No hay categorías</div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="table-responsive">
