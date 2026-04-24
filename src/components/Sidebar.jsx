@@ -4,7 +4,7 @@ import { LayoutDashboard, Package, ShoppingCart, Users, Settings, FileText } fro
 import { useShop } from '../context/ShopContext';
 import './Sidebar.css';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, closeMenu }) => {
   const { shopSettings } = useShop();
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
@@ -16,7 +16,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-brand">
         <img src="/logo.png" alt="TuNegocio Logo" className="brand-logo-img" />
         <h2>{shopSettings.shopName}</h2>
@@ -28,6 +28,7 @@ const Sidebar = () => {
             key={item.path}
             to={item.path}
             className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            onClick={closeMenu}
           >
             <span className="nav-icon">{item.icon}</span>
             <span className="nav-label">{item.name}</span>

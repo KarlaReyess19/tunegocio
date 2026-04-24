@@ -234,15 +234,45 @@
   border-radius: inherit;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .inventory-toolbar {
     padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
   }
+  
+  .filter-container {
+    width: 100%;
+  }
+  
+  .filter-container button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-dropdown {
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 1rem;
   }
+  
   .search-box {
     max-width: 100%;
+  }
+
+  .page-header button {
+    width: 100%;
   }
 }

@@ -83,20 +83,22 @@
 
 @media (max-width: 1024px) {
   .sidebar {
-    width: var(--sidebar-width-collapsed);
+    transform: translateX(-100%);
+    box-shadow: none;
   }
   
-  .sidebar-brand h2, .nav-item span {
-    display: none;
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
   }
-  
-  .sidebar-brand {
-    padding: 0;
-    justify-content: center;
+
+  .sidebar-brand h2, .nav-item .nav-label {
+    display: block; /* ensure they show when menu is open on mobile */
   }
-  
-  .nav-item {
-    justify-content: center;
-    padding: 1rem;
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    width: 240px;
   }
 }

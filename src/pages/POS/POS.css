@@ -344,9 +344,52 @@
 }
 
 @media (max-width: 1024px) {
-  .pos-page { flex-direction: column; height: auto; }
-  .pos-sidebar { width: 100%; border-radius: 0; }
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .pos-page {
+    flex-direction: column;
+    height: auto;
+    gap: 1.5rem;
+  }
+  
+  .pos-main {
+    overflow: visible;
+  }
+
+  .pos-sidebar {
+    width: 100%;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    max-height: none;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    max-height: 500px;
+  }
+
+  .pos-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .pos-search {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1rem;
+  }
+
+  .pos-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .ticket-header, .ticket-client, .ticket-items, .ticket-footer {
+    padding: 1rem 1.25rem;
+  }
 }
 
 /* Selector de Clientes Premium */

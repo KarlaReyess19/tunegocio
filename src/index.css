@@ -224,3 +224,41 @@ input, select, textarea {
 .data-table tr:hover td {
   background-color: rgba(37, 99, 235, 0.02);
 }
+/* Responsive Utilities */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .btn-primary, .btn-outline {
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+  }
+
+  /* Modal Responsiveness */
+  .modal-overlay {
+    padding: 1rem;
+    align-items: flex-end; /* Modales emergen desde abajo en móvil */
+  }
+
+  .modal-content {
+    width: 100% !important;
+    max-height: 90vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+    margin: 0;
+    animation: slideUp 0.3s ease-out;
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}

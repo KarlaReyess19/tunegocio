@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, User, LogOut, Settings, Package, AlertTriangle, Wallet, CreditCard, CheckCircle } from 'lucide-react';
+import { Bell, Search, User, LogOut, Settings, Package, AlertTriangle, Wallet, CreditCard, CheckCircle, Menu } from 'lucide-react';
 import { collection, query, where, onSnapshot, limit, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
 
-const Header = () => {
+const Header = ({ toggleSidebar }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -63,7 +63,12 @@ const Header = () => {
   };
   return (
     <header className="main-header">
-      <div className="header-brand-placeholder"></div>
+      <div className="header-left">
+        <button className="mobile-menu-btn" onClick={toggleSidebar}>
+          <Menu size={24} />
+        </button>
+        <div className="header-brand-placeholder"></div>
+      </div>
       
       <div className="header-actions">
         <div className="notifications-container">
