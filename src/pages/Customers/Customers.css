@@ -93,3 +93,39 @@
 .action-btn.history:hover {
   color: var(--primary-brand);
 }
+
+/* Payment Modal Styles */
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.payment-summary {
+  background-color: var(--bg-color);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--primary-brand);
+}
+
+.payment-summary p {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+.payment-summary b {
+  color: var(--text-primary);
+}
+
+.payment-summary .text-danger {
+  font-size: 1.25rem;
+  color: var(--danger);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}

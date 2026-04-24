@@ -92,25 +92,39 @@ const POS = () => {
     setProcessing(true);
     try {
       await runTransaction(db, async (transaction) => {
-        // 1. Verify and Update Stock for each item
+        // 1. PRE-READ ALL NECESSARY DATA
+        const itemSnapshots = [];
         for (const item of cart) {
           const productRef = doc(db, 'products', item.id);
-          const productSnap = await transaction.get(productRef);
-          
-          if (!productSnap.exists()) throw new Error(`Producto ${item.name} no existe.`);
-          
-          const currentStock = productSnap.data().stock;
+          const snap = await transaction.get(productRef);
+          if (!snap.exists()) throw new Error(`Producto ${item.name} no existe.`);
+          itemSnapshots.push({ ref: productRef, snap, item });
+        }
+
+        let customerSnap = null;
+        let customerRef = null;
+        if (method === 'Fiado' && selectedCustomer) {
+          customerRef = doc(db, 'customers', selectedCustomer.id);
+          customerSnap = await transaction.get(customerRef);
+          if (!customerSnap.exists()) throw new Error("Cliente no existe.");
+        }
+
+        // 2. VALIDATION
+        for (const { snap, item } of itemSnapshots) {
+          const currentStock = snap.data().stock;
           if (currentStock < item.quantity) {
             throw new Error(`Stock insuficiente para ${item.name}. Disponible: ${currentStock}`);
           }
-          
-          transaction.update(productRef, { stock: currentStock - item.quantity });
         }
 
-        // 2. Update Customer Debt if Fiado
-        if (method === 'Fiado' && selectedCustomer) {
-          const customerRef = doc(db, 'customers', selectedCustomer.id);
-          const customerSnap = await transaction.get(customerRef);
+        // 3. EXECUTE ALL WRITES
+        // Update product stocks
+        for (const { ref, snap, item } of itemSnapshots) {
+          transaction.update(ref, { stock: snap.data().stock - item.quantity });
+        }
+
+        // Update customer debt if Fiado
+        if (method === 'Fiado' && customerSnap) {
           const currentDebt = customerSnap.data().debtBalance || 0;
           transaction.update(customerRef, { 
             debtBalance: currentDebt + total,
@@ -118,9 +132,10 @@ const POS = () => {
           });
         }
 
-        // 3. Create Sales Record
-        const saleRef = collection(db, 'sales');
-        await addDoc(saleRef, {
+        // Create Sales Record (part of the transaction)
+        const saleId = doc(collection(db, 'sales')).id;
+        const saleRef = doc(db, 'sales', saleId);
+        transaction.set(saleRef, {
           items: cart,
           total,
           method,
@@ -185,7 +200,11 @@ const POS = () => {
               onClick={() => addToCart(product)}
             >
               <div className="product-color" style={{ backgroundColor: product.color }}>
-                {product.name.charAt(0)}
+                {product.imageUrl ? (
+                  <img src={product.imageUrl} alt={product.name} className="product-card-img" />
+                ) : (
+                  product.name.charAt(0)
+                )}
               </div>
               <div className="product-info">
                 <h4>{product.name}</h4>

@@ -150,7 +150,11 @@ const Inventory = () => {
                 return (
                   <tr key={product.id}>
                     <td className="product-name-cell">
-                      <div className="product-icon">{product.name.charAt(0)}</div>
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.name} className="product-img" />
+                      ) : (
+                        <div className="product-icon">{product.name.charAt(0)}</div>
+                      )}
                       <span className="product-name">{product.name}</span>
                     </td>
                     <td>{product.category}</td>

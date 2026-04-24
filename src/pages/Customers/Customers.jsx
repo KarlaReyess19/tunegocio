@@ -22,6 +22,8 @@ const Customers = () => {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
   const { user } = useAuth();
   const { shopSettings } = useShop();
 
@@ -90,17 +92,29 @@ const Customers = () => {
     }
   };
 
-  const handlePayment = async (customer) => {
-    const amount = window.prompt(`Registrar abono para ${customer.name}. Saldo actual: ${formatCurrency(customer.debtBalance)}. Ingrese el monto:`);
-    if (amount && !isNaN(amount)) {
-      const newBalance = Math.max(0, customer.debtBalance - parseFloat(amount));
-      try {
-        await updateDoc(doc(db, 'customers', customer.id), {
-          debtBalance: newBalance
-        });
-      } catch (error) {
-        console.error("Error updating balance: ", error);
-      }
+  const handlePaymentClick = (customer) => {
+    setSelectedCustomer(customer);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
+    if (!paymentAmount || isNaN(paymentAmount)) return;
+
+    const amount = parseFloat(paymentAmount);
+    const newBalance = Math.max(0, selectedCustomer.debtBalance - amount);
+
+    try {
+      await updateDoc(doc(db, 'customers', selectedCustomer.id), {
+        debtBalance: newBalance
+      });
+      // Optionally register this as a transaction in a 'payments' collection
+      setIsPaymentModalOpen(false);
+      setPaymentAmount('');
+      setSelectedCustomer(null);
+    } catch (error) {
+      console.error("Error updating balance: ", error);
+      alert("Error al procesar el pago");
     }
   };
 
@@ -111,7 +125,9 @@ const Customers = () => {
 
   const closePortal = () => {
     setIsModalOpen(false);
+    setIsPaymentModalOpen(false);
     setSelectedCustomer(null);
+    setPaymentAmount('');
   };
 
   // Re-calculate total debt
@@ -202,7 +218,7 @@ const Customers = () => {
                         className="action-btn pay" 
                         title="Registrar Abono" 
                         disabled={!hasDebt}
-                        onClick={() => handlePayment(customer)}
+                        onClick={() => handlePaymentClick(customer)}
                       >
                         <DollarSign size={16} />
                       </button>
@@ -239,6 +255,38 @@ const Customers = () => {
           onCancel={closePortal}
           initialData={selectedCustomer}
         />
+      </Modal>
+
+      <Modal
+        isOpen={isPaymentModalOpen}
+        onClose={closePortal}
+        title="Registrar Abono / Pago"
+      >
+        <form onSubmit={handlePaymentSubmit} className="payment-form">
+          <div className="payment-summary">
+            <p>Cliente: <b>{selectedCustomer?.name}</b></p>
+            <p>Deuda Actual: <b className="text-danger">{formatCurrency(selectedCustomer?.debtBalance || 0, shopSettings.currency)}</b></p>
+          </div>
+          
+          <div className="form-group">
+            <label>Monto del Abono ({shopSettings.currency})</label>
+            <input 
+              type="number" 
+              className="form-control" 
+              placeholder="0.00" 
+              step="0.01"
+              required
+              autoFocus
+              value={paymentAmount}
+              onChange={(e) => setPaymentAmount(e.target.value)}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <button type="button" className="btn-outline" onClick={closePortal}>Cancelar</button>
+            <button type="submit" className="btn-primary">Confirmar Pago</button>
+          </div>
+        </form>
       </Modal>
     </div>
   );
