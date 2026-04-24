@@ -3,6 +3,7 @@ import { Search, Plus, Phone, DollarSign, FileText, Users, Trash2, Edit2 } from 
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useShop } from '../../context/ShopContext';
 import { formatCurrency } from '../../utils/formatters';
 import Modal from '../../components/Modal';
 import CustomerForm from '../../components/forms/CustomerForm';
@@ -22,6 +23,7 @@ const Customers = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const { user } = useAuth();
+  const { shopSettings } = useShop();
 
   // Firestore Real-time Listener (Filtered by owner)
   useEffect(() => {
@@ -142,7 +144,7 @@ const Customers = () => {
           <div className="summary-badges">
             <div className="badge-total-debt">
               <span>Total por Cobrar:</span>
-              <b>{formatCurrency(totalDebt)}</b>
+              <b>{formatCurrency(totalDebt, shopSettings.currency)}</b>
             </div>
           </div>
         </div>
@@ -178,7 +180,7 @@ const Customers = () => {
                     <td>{customer.lastPurchase}</td>
                     <td>
                       <b className={hasDebt ? 'text-danger' : 'text-success'}>
-                        {formatCurrency(customer.debtBalance)}
+                        {formatCurrency(customer.debtBalance, shopSettings.currency)}
                       </b>
                     </td>
                     <td>

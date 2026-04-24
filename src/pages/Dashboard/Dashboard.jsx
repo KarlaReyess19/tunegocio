@@ -3,12 +3,14 @@ import { TrendingUp, Package, Users, AlertTriangle } from 'lucide-react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useShop } from '../../context/ShopContext';
 import StatCard from '../../components/StatCard';
 import { formatCurrency } from '../../utils/formatters';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { shopSettings } = useShop();
   const [stats, setStats] = useState({
     todaySales: 0,
     lowStockCount: 0,
@@ -73,14 +75,14 @@ const Dashboard = () => {
   return (
     <div className="dashboard-page">
       <div className="page-header">
-        <h1>Resumen de Hoy</h1>
-        <p>Bienvenido de nuevo. Aquí tienes un vistazo de tu negocio.</p>
+        <h1>Resumen de {shopSettings.shopName}</h1>
+        <p>{shopSettings.shopSlogan || 'Bienvenido de nuevo. Aquí tienes un vistazo de tu negocio.'}</p>
       </div>
 
       <div className="stats-grid">
         <StatCard 
           title="Ventas de Hoy" 
-          value={formatCurrency(stats.todaySales)} 
+          value={formatCurrency(stats.todaySales, shopSettings.currency)} 
           icon={<TrendingUp size={20} />} 
           trend={0} 
           trendLabel="hoy"
@@ -100,7 +102,7 @@ const Dashboard = () => {
         />
         <StatCard 
           title="Valor Inventario" 
-          value={formatCurrency(stats.totalInventoryValue)} 
+          value={formatCurrency(stats.totalInventoryValue, shopSettings.currency)} 
           icon={<Package size={20} />} 
           color="#8b5cf6"
         />
@@ -129,7 +131,7 @@ const Dashboard = () => {
                     <td>{new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                     <td>{sale.customerName}</td>
                     <td>{sale.items?.length || 0}</td>
-                    <td><b>{formatCurrency(sale.total)}</b></td>
+                    <td><b>{formatCurrency(sale.total, shopSettings.currency)}</b></td>
                     <td>
                       <span className={sale.method === 'Fiado' ? 'badge-warning' : 'badge-success'}>
                         {sale.method === 'Fiado' ? 'Por Cobrar' : 'Pagado'}

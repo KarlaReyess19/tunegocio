@@ -3,6 +3,7 @@ import { Search, Calendar, FileText, Download } from 'lucide-react';
 import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useShop } from '../../context/ShopContext';
 import { formatCurrency } from '../../utils/formatters';
 import './SalesHistory.css';
 
@@ -19,6 +20,7 @@ const SalesHistory = () => {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { shopSettings } = useShop();
 
   useEffect(() => {
     if (!user) return;
@@ -109,7 +111,7 @@ const SalesHistory = () => {
                     </span>
                   </td>
                   <td>{sale.items?.length || 0} arts.</td>
-                  <td><b>{formatCurrency(sale.total)}</b></td>
+                  <td><b>{formatCurrency(sale.total, shopSettings.currency)}</b></td>
                   <td>
                     {sale.method === 'Fiado' ? (
                       <span className="badge-warning">Por Cobrar</span>

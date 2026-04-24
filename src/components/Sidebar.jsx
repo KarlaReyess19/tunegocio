@@ -1,9 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, FileText } from 'lucide-react';
+import { useShop } from '../context/ShopContext';
 import './Sidebar.css';
 
 const Sidebar = () => {
+  const { shopSettings } = useShop();
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'Punto de Venta', path: '/pos', icon: <ShoppingCart size={20} /> },
@@ -17,7 +19,7 @@ const Sidebar = () => {
     <aside className="sidebar">
       <div className="sidebar-brand">
         <img src="/logo.png" alt="TuNegocio Logo" className="brand-logo-img" />
-        <h2>TuNegocio</h2>
+        <h2>{shopSettings.shopName}</h2>
       </div>
       
       <nav className="sidebar-nav">

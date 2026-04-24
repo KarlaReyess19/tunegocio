@@ -3,6 +3,7 @@ import { Search, Plus, Edit2, Trash2, Filter, Package } from 'lucide-react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useShop } from '../../context/ShopContext';
 import { formatCurrency } from '../../utils/formatters';
 import Modal from '../../components/Modal';
 import ProductForm from '../../components/forms/ProductForm';
@@ -23,6 +24,7 @@ const Inventory = () => {
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const { user } = useAuth();
+  const { shopSettings } = useShop();
 
   // Firestore Real-time Listener (Filtered by owner)
   useEffect(() => {
@@ -152,7 +154,7 @@ const Inventory = () => {
                       <span className="product-name">{product.name}</span>
                     </td>
                     <td>{product.category}</td>
-                    <td><b>{formatCurrency(product.price)}</b></td>
+                    <td><b>{formatCurrency(product.price, shopSettings.currency)}</b></td>
                     <td>{product.stock}</td>
                     <td>
                       {isOutOfStock ? (

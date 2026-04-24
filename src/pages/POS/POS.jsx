@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, Minus, X, CreditCard, Banknote, UserPlus, CheckCircle } from 'lucide-react';
-import { collection, onSnapshot, addDoc, doc, runTransaction, query, orderBy, where } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useShop } from '../../context/ShopContext';
 import { formatCurrency } from '../../utils/formatters';
 import Modal from '../../components/Modal';
 import './POS.css';
@@ -19,6 +17,7 @@ const POS = () => {
   const [processing, setProcessing] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState(false);
   const { user } = useAuth();
+  const { shopSettings } = useShop();
 
   // Firestore Real-time Listeners (Filtered by owner)
   useEffect(() => {
@@ -150,7 +149,7 @@ const POS = () => {
       <div className="sale-success-screen">
         <CheckCircle size={80} color="var(--success)" />
         <h2>¡Venta Completada!</h2>
-        <p>El total fue de <b>{formatCurrency(total)}</b></p>
+        <p>El total fue de <b>{formatCurrency(total, shopSettings.currency)}</b></p>
         <button className="btn-primary" onClick={() => setSaleSuccess(false)}>
           Nueva Venta
         </button>
@@ -187,7 +186,7 @@ const POS = () => {
               </div>
               <div className="product-info">
                 <h4>{product.name}</h4>
-                <span className="product-price">{formatCurrency(product.price)}</span>
+                <span className="product-price">{formatCurrency(product.price, shopSettings.currency)}</span>
               </div>
             </div>
           ))}
@@ -224,7 +223,7 @@ const POS = () => {
               <div key={item.id} className="ticket-item">
                 <div className="item-details">
                   <h4>{item.name}</h4>
-                  <span>{formatCurrency(item.price)}</span>
+                  <span>{formatCurrency(item.price, shopSettings.currency)}</span>
                 </div>
                 <div className="item-actions">
                   <div className="qty-control">
@@ -233,7 +232,7 @@ const POS = () => {
                     <button onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button>
                   </div>
                   <div className="item-total">
-                    <b>{formatCurrency(item.price * item.quantity)}</b>
+                    <b>{formatCurrency(item.price * item.quantity, shopSettings.currency)}</b>
                     <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
                       <X size={16} />
                     </button>
@@ -248,11 +247,11 @@ const POS = () => {
           <div className="ticket-summary">
             <div className="summary-row">
               <span>Subtotal</span>
-              <span>{formatCurrency(total)}</span>
+              <span>{formatCurrency(total, shopSettings.currency)}</span>
             </div>
             <div className="summary-row total-row">
               <span>Total a Cobrar</span>
-              <span>{formatCurrency(total)}</span>
+              <span>{formatCurrency(total, shopSettings.currency)}</span>
             </div>
           </div>
           
@@ -301,7 +300,7 @@ const POS = () => {
                 <p>{c.phone}</p>
               </div>
               <span className={c.debtBalance > 0 ? 'text-danger' : ''}>
-                {formatCurrency(c.debtBalance)}
+                {formatCurrency(c.debtBalance, shopSettings.currency)}
               </span>
             </div>
           ))}
