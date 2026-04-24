@@ -23,19 +23,25 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user) return;
 
-    // 1. Fetch Today's Sales
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 1. Fetch Sales (Filter by date in JS to avoid index requirements)
     const qSales = query(
       collection(db, 'sales'),
-      where('ownerId', '==', user.uid),
-      where('createdAt', '>=', today.toISOString())
+      where('ownerId', '==', user.uid)
     );
     const unsubSales = onSnapshot(qSales, (snapshot) => {
-      const sales = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      const totalToday = sales.reduce((sum, s) => sum + (s.total || 0), 0);
+      const allSales = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      
+      // Filter today's sales in memory
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      
+      const todaySalesList = allSales.filter(s => new Date(s.createdAt) >= startOfToday);
+      const totalToday = todaySalesList.reduce((sum, s) => sum + (s.total || 0), 0);
+      
       setStats(prev => ({ ...prev, todaySales: totalToday }));
-      setRecentSales(sales.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5));
+      setRecentSales(allSales.sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5));
+    }, (error) => {
+      console.error("Dashboard Sales Error:", error);
     });
 
     // 2. Fetch Low Stock Alerts

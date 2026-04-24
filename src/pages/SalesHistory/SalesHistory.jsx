@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Calendar, FileText, Download } from 'lucide-react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { Search, Calendar, FileText, Download, Check } from 'lucide-react';
+import { collection, onSnapshot, query, where, orderBy, doc, runTransaction } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useShop } from '../../context/ShopContext';
@@ -69,6 +69,37 @@ const SalesHistory = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleMarkAsPaid = async (sale) => {
+    if (!window.confirm(`¿Marcar este ticket de ${formatCurrency(sale.total, shopSettings.currency)} como pagado?`)) return;
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const saleRef = doc(db, 'sales', sale.id);
+        
+        // 1. Update sale status/method
+        transaction.update(saleRef, { 
+          method: 'Efectivo', // Change to Efectivo or add a status field
+          paidAt: new Date().toISOString()
+        });
+
+        // 2. If it was linked to a customer, reduce their debt
+        if (sale.customerId) {
+          const customerRef = doc(db, 'customers', sale.customerId);
+          const customerSnap = await transaction.get(customerRef);
+          
+          if (customerSnap.exists()) {
+            const currentDebt = customerSnap.data().debtBalance || 0;
+            const newDebt = Math.max(0, currentDebt - sale.total);
+            transaction.update(customerRef, { debtBalance: newDebt });
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error marking as paid:", error);
+      alert("Error al actualizar la venta");
+    }
   };
 
   const filteredSales = sales.filter((sale) =>
@@ -145,7 +176,16 @@ const SalesHistory = () => {
                       <span className="badge-success">Pagado</span>
                     )}
                   </td>
-                  <td className="actions-cell">
+                   <td className="actions-cell">
+                    {sale.method === 'Fiado' && (
+                      <button 
+                        className="action-btn text-success" 
+                        title="Marcar como Pagado"
+                        onClick={() => handleMarkAsPaid(sale)}
+                      >
+                        <Check size={16} />
+                      </button>
+                    )}
                     <button className="action-btn" title="Ver Ticket">
                       <FileText size={16} />
                     </button>
