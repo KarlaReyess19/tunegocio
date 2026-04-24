@@ -1,40 +1,51 @@
 .stat-card {
   background-color: var(--surface-color);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
   transition: var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
+  position: relative;
+  overflow: hidden;
 }
 
 .stat-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+  border-color: var(--primary-light);
 }
 
 .stat-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .stat-title {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 700;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin: 0;
 }
 
 .stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1) rotate(-5deg);
 }
 
 .stat-body {
@@ -44,35 +55,51 @@
 }
 
 .stat-value {
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: 2.25rem;
+  font-weight: 800;
   color: var(--text-primary);
   margin: 0;
+  letter-spacing: -0.04em;
 }
 
 .stat-trend {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .trend-value {
-  font-weight: 600;
-  padding: 0.125rem 0.375rem;
+  font-weight: 700;
+  padding: 0.25rem 0.625rem;
   border-radius: var(--radius-full);
 }
 
 .trend-value.positive {
-  background-color: #d1fae5;
+  background-color: var(--success-light);
   color: var(--success);
 }
 
 .trend-value.negative {
-  background-color: #fee2e2;
+  background-color: var(--danger-light);
   color: var(--danger);
 }
 
 .trend-label {
-  color: var(--text-secondary);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Background Ornament */
+.stat-card::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 100px;
+  height: 100px;
+  background-color: currentColor;
+  opacity: 0.03;
+  border-radius: 50%;
+  pointer-events: none;
 }

@@ -129,3 +129,83 @@
   gap: 1rem;
   margin-top: 1rem;
 }
+/* Debt Explorer (Individual Ticket Payments) */
+.debt-explorer {
+  padding: 0.5rem 0;
+}
+
+.debt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.debt-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.debt-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--border-color);
+}
+
+.debt-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.debt-id {
+  font-family: monospace;
+  font-weight: 600;
+  color: var(--primary-brand);
+}
+
+.debt-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.debt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.debt-payment-action {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.method-select {
+  width: 120px;
+  font-size: 0.85rem;
+  padding: 0.4rem;
+}
+
+.amount-input {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.loading-debts, .no-debts {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.no-debts svg {
+  margin-bottom: 1rem;
+}

@@ -21,6 +21,8 @@ const POS = () => {
   const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [saleSuccess, setSaleSuccess] = useState(false);
+  const [lastSaleTotal, setLastSaleTotal] = useState(0);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const { user } = useAuth();
   const { shopSettings } = useShop();
 
@@ -85,10 +87,12 @@ const POS = () => {
 
   const handleProcessSale = async (method) => {
     if (cart.length === 0) return;
-    if (method === 'Fiado' && !selectedCustomer) {
-      alert("Por favor selecciona un cliente para ventas a crédito.");
-      setIsCustomerModalOpen(true);
-      return;
+    if (method === 'Fiado') {
+      if (!selectedCustomer) {
+        alert("Por favor selecciona un cliente para ventas a crédito.");
+        setIsCustomerModalOpen(true);
+        return;
+      }
     }
 
     setProcessing(true);
@@ -141,6 +145,8 @@ const POS = () => {
           items: cart,
           total,
           method,
+          paidAmount: method === 'Fiado' ? 0 : total,
+          pendingBalance: method === 'Fiado' ? total : 0,
           ownerId: user.uid,
           customerName: selectedCustomer?.name || 'Consumidor Final',
           customerId: selectedCustomer?.id || null,
@@ -148,6 +154,8 @@ const POS = () => {
         });
       });
 
+      const finalTotalWithTax = total * (1 + (shopSettings.taxRate / 100));
+      setLastSaleTotal(finalTotalWithTax);
       setSaleSuccess(true);
       setCart([]);
       setSelectedCustomer(null);
@@ -187,7 +195,7 @@ const POS = () => {
       <div className="sale-success-screen">
         <CheckCircle size={80} color="var(--success)" />
         <h2>¡Venta Completada!</h2>
-        <p>El total fue de <b>{formatCurrency(total, shopSettings.currency)}</b></p>
+        <p>El total fue de <b>{formatCurrency(lastSaleTotal, shopSettings.currency)}</b></p>
         <button className="btn-primary" onClick={() => setSaleSuccess(false)}>
           Nueva Venta
         </button>
@@ -291,9 +299,15 @@ const POS = () => {
               <span>Subtotal</span>
               <span>{formatCurrency(total, shopSettings.currency)}</span>
             </div>
+            {shopSettings.taxRate > 0 && (
+              <div className="summary-row">
+                <span>ISV ({shopSettings.taxRate}%)</span>
+                <span>{formatCurrency(total * (shopSettings.taxRate / 100), shopSettings.currency)}</span>
+              </div>
+            )}
             <div className="summary-row total-row">
               <span>Total a Cobrar</span>
-              <span>{formatCurrency(total, shopSettings.currency)}</span>
+              <span>{formatCurrency(total * (1 + (shopSettings.taxRate / 100)), shopSettings.currency)}</span>
             </div>
           </div>
           
@@ -334,14 +348,24 @@ const POS = () => {
         <div className="customer-picker-list">
           <div className="picker-header">
             <div className="picker-search">
-              <input type="text" placeholder="Buscar cliente..." />
+              <input 
+                type="text" 
+                placeholder="Buscar cliente..." 
+                value={customerSearchQuery}
+                onChange={(e) => setCustomerSearchQuery(e.target.value)}
+              />
             </div>
             <button className="btn-primary" onClick={() => setIsNewCustomerModalOpen(true)}>
               <Plus size={18} />
               <span>Nuevo</span>
             </button>
           </div>
-          {customers.map(c => (
+          {customers
+            .filter(c => 
+              c.name.toLowerCase().includes(customerSearchQuery.toLowerCase()) || 
+              (c.phone && c.phone.includes(customerSearchQuery))
+            )
+            .map(c => (
             <div key={c.id} className="picker-item" onClick={() => selectCustomer(c)}>
               <div>
                 <b>{c.name}</b>

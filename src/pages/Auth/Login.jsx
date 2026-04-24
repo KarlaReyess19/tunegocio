@@ -9,7 +9,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -24,6 +24,22 @@ const Login = () => {
         setError('Correo o contraseña incorrectos. Por favor intenta de nuevo.');
       } else {
         setError('Error al iniciar sesión. Por favor verifica tu conexión.');
+      }
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      await loginWithGoogle();
+      navigate('/');
+    } catch (err) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError('Error al iniciar sesión con Google.');
       }
       console.error(err);
     } finally {
@@ -78,6 +94,20 @@ const Login = () => {
             <LogIn size={20} />
           </button>
         </form>
+
+        <div className="auth-separator">
+          <span>O también</span>
+        </div>
+
+        <button 
+          type="button" 
+          className="btn-google" 
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+          Continuar con Google
+        </button>
 
         <div className="auth-footer">
           ¿No tienes una cuenta? <Link to="/signup">Regístrate gratis</Link>

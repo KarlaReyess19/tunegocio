@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Package, Users, AlertTriangle } from 'lucide-react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -11,6 +12,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { user } = useAuth();
   const { shopSettings } = useShop();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     todaySales: 0,
     lowStockCount: 0,
@@ -118,7 +120,7 @@ const Dashboard = () => {
         <div className="recent-sales-panel">
           <div className="panel-header">
             <h3>Últimas Ventas</h3>
-            <button className="text-btn">Ver todas</button>
+            <button className="text-btn" onClick={() => navigate('/history')}>Ver todas</button>
           </div>
           <div className="table-responsive">
             <table className="data-table">

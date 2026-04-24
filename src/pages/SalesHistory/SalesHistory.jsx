@@ -19,6 +19,7 @@ const SalesHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState('all'); // 'all', 'today', 'week'
   const { user } = useAuth();
   const { shopSettings } = useShop();
 
@@ -102,10 +103,31 @@ const SalesHistory = () => {
     }
   };
 
-  const filteredSales = sales.filter((sale) =>
-    sale.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSales = sales.filter((sale) => {
+    // 1. Search filter
+    const matchesSearch = sale.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          sale.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+
+    // 2. Date filter
+    if (dateFilter === 'all') return true;
+
+    const saleDate = new Date(sale.createdAt);
+    const now = new Date();
+
+    if (dateFilter === 'today') {
+      return saleDate.toDateString() === now.toDateString();
+    }
+
+    if (dateFilter === 'week') {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(now.getDate() - 7);
+      return saleDate >= oneWeekAgo;
+    }
+
+    return true;
+  });
 
   return (
     <div className="sales-history-page">
@@ -132,11 +154,17 @@ const SalesHistory = () => {
             />
           </div>
           <div className="filter-group">
-            <button className="btn-outline">
+            <button 
+              className={`btn-outline ${dateFilter === 'today' ? 'active' : ''}`}
+              onClick={() => setDateFilter(dateFilter === 'today' ? 'all' : 'today')}
+            >
               <Calendar size={18} />
               <span>Hoy</span>
             </button>
-            <button className="btn-outline">
+            <button 
+              className={`btn-outline ${dateFilter === 'week' ? 'active' : ''}`}
+              onClick={() => setDateFilter(dateFilter === 'week' ? 'all' : 'week')}
+            >
               <span>Esta Semana</span>
             </button>
           </div>
@@ -171,7 +199,11 @@ const SalesHistory = () => {
                   <td><b>{formatCurrency(sale.total, shopSettings.currency)}</b></td>
                   <td>
                     {sale.method === 'Fiado' ? (
-                      <span className="badge-warning">Por Cobrar</span>
+                      sale.paidAmount > 0 ? (
+                        <span className="badge-warning" style={{ backgroundColor: '#ffedd5', color: '#9a3412' }}>Abonado</span>
+                      ) : (
+                        <span className="badge-warning">Por Cobrar</span>
+                      )
                     ) : (
                       <span className="badge-success">Pagado</span>
                     )}

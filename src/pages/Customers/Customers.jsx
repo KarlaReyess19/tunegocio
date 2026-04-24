@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Phone, DollarSign, FileText, Users, Trash2, Edit2 } from 'lucide-react';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where } from 'firebase/firestore';
+import { Search, Plus, Phone, DollarSign, FileText, Users, Trash2, Edit2, CheckCircle } from 'lucide-react';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where, getDocs, runTransaction } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useShop } from '../../context/ShopContext';
@@ -23,7 +23,10 @@ const Customers = () => {
   const [loading, setLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [customerDebts, setCustomerDebts] = useState([]);
+  const [loadingDebts, setLoadingDebts] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [processingPaymentId, setProcessingPaymentId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('Efectivo');
   const { user } = useAuth();
   const { shopSettings } = useShop();
@@ -93,37 +96,91 @@ const Customers = () => {
     }
   };
 
-  const handlePaymentClick = (customer) => {
+  const handlePaymentClick = async (customer) => {
     setSelectedCustomer(customer);
     setIsPaymentModalOpen(true);
+    setLoadingDebts(true);
+    
+    try {
+      const q = query(
+        collection(db, 'sales'),
+        where('customerId', '==', customer.id),
+        where('method', '==', 'Fiado')
+      );
+      const snap = await getDocs(q);
+      const debts = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+        // Handle legacy data where pendingBalance might not exist but it was Fiado
+        currentPending: d.data().pendingBalance !== undefined ? d.data().pendingBalance : (d.data().total - (d.data().paidAmount || 0))
+      })).filter(d => d.currentPending > 0)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        
+      setCustomerDebts(debts);
+    } catch (error) {
+      console.error("Error fetching customer debts:", error);
+    } finally {
+      setLoadingDebts(false);
+    }
   };
 
-  const handlePaymentSubmit = async (e) => {
-    e.preventDefault();
-    if (!paymentAmount || isNaN(paymentAmount)) return;
-
-    const amount = parseFloat(paymentAmount);
-    
-    if (amount > selectedCustomer.debtBalance) {
-      alert(`El abono no puede ser mayor a la deuda actual (${formatCurrency(selectedCustomer.debtBalance, shopSettings.currency)})`);
-      return;
-    }
-
-    const newBalance = Math.max(0, selectedCustomer.debtBalance - amount);
+  const handlePaymentSubmit = async (sale, amountToPay) => {
+    if (!amountToPay || isNaN(amountToPay) || amountToPay <= 0) return;
+    const amount = parseFloat(amountToPay);
 
     try {
-      await updateDoc(doc(db, 'customers', selectedCustomer.id), {
-        debtBalance: newBalance
+      setProcessingPaymentId(sale.id);
+      await runTransaction(db, async (transaction) => {
+        // 1. PRE-READS (Important: Reads must happen before any writes)
+        const saleRef = doc(db, 'sales', sale.id);
+        const customerRef = doc(db, 'customers', selectedCustomer.id);
+        
+        const saleSnap = await transaction.get(saleRef);
+        const customerSnap = await transaction.get(customerRef);
+        
+        if (!saleSnap.exists()) throw new Error("Venta no existe");
+        if (!customerSnap.exists()) throw new Error("Cliente no existe");
+        
+        const saleData = saleSnap.data();
+        const customerData = customerSnap.data();
+
+        const currentPaid = saleData.paidAmount || 0;
+        const currentTotal = saleData.total || 0;
+        const newPaid = currentPaid + amount;
+        const fullyPaid = newPaid >= currentTotal;
+        const currentTotalDebt = customerData.debtBalance || 0;
+
+        // 2. WRITES (All updates happen after reads)
+        const methodToSave = fullyPaid ? paymentMethod : 'Fiado';
+        
+        transaction.update(saleRef, {
+          paidAmount: newPaid,
+          pendingBalance: Math.max(0, currentTotal - newPaid),
+          method: methodToSave,
+          lastPaymentMethod: paymentMethod,
+          lastAbonoAt: new Date().toISOString()
+        });
+
+        transaction.update(customerRef, {
+          debtBalance: Math.max(0, currentTotalDebt - amount)
+        });
       });
-      // Optionally register this as a transaction in a 'payments' collection
-      // containing: amount, paymentMethod, date, customerId
-      setIsPaymentModalOpen(false);
+
+      // Refresh local list
+      setCustomerDebts(prev => prev.map(d => {
+        if (d.id === sale.id) {
+          const newPending = d.currentPending - amount;
+          return { ...d, currentPending: newPending };
+        }
+        return d;
+      }).filter(d => d.currentPending > 0));
+      
       setPaymentAmount('');
-      setPaymentMethod('Efectivo');
-      setSelectedCustomer(null);
     } catch (error) {
-      console.error("Error updating balance: ", error);
-      alert("Error al procesar el pago");
+      console.error("Error en pago individual:", error);
+      alert("No se pudo procesar el pago. Por favor intenta de nuevo.");
+    } finally {
+      setProcessingPaymentId(null);
     }
   };
 
@@ -136,6 +193,7 @@ const Customers = () => {
     setIsModalOpen(false);
     setIsPaymentModalOpen(false);
     setSelectedCustomer(null);
+    setCustomerDebts([]);
     setPaymentAmount('');
   };
 
@@ -269,46 +327,63 @@ const Customers = () => {
       <Modal
         isOpen={isPaymentModalOpen}
         onClose={closePortal}
-        title="Registrar Abono / Pago"
+        title={`Deudas de ${selectedCustomer?.name}`}
       >
-        <form onSubmit={handlePaymentSubmit} className="payment-form">
-          <div className="payment-summary">
-            <p>Cliente: <b>{selectedCustomer?.name}</b></p>
-            <p>Deuda Actual: <b className="text-danger">{formatCurrency(selectedCustomer?.debtBalance || 0, shopSettings.currency)}</b></p>
-          </div>
+        <div className="debt-explorer">
+          {loadingDebts ? (
+            <div className="loading-debts">Cargando deudas...</div>
+          ) : customerDebts.length === 0 ? (
+            <div className="no-debts">
+              <CheckCircle size={40} color="var(--success)" />
+              <p>Este cliente no tiene deudas pendientes.</p>
+            </div>
+          ) : (
+            <div className="debt-list">
+              {customerDebts.map(debt => (
+                <div key={debt.id} className="debt-card">
+                  <div className="debt-header">
+                    <span className="debt-date">{new Date(debt.createdAt).toLocaleDateString()}</span>
+                    <span className="debt-id">#{debt.id.slice(-6).toUpperCase()}</span>
+                  </div>
+                  <div className="debt-body">
+                    <div className="debt-info">
+                      <span>Venta Total: <b>{formatCurrency(debt.total, shopSettings.currency)}</b></span>
+                      <span>Saldo Pendiente: <b className="text-danger">{formatCurrency(debt.currentPending, shopSettings.currency)}</b></span>
+                    </div>
+                    <div className="debt-payment-action">
+                      <select 
+                        className="form-control method-select"
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                      >
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                      </select>
+                      <input 
+                        type="number" 
+                        placeholder="Monto..." 
+                        className="form-control amount-input"
+                        max={debt.currentPending}
+                        onChange={(e) => setPaymentAmount(e.target.value)}
+                      />
+                      <button 
+                        className="btn-primary btn-sm"
+                        disabled={processingPaymentId === debt.id}
+                        onClick={() => handlePaymentSubmit(debt, paymentAmount)}
+                      >
+                        {processingPaymentId === debt.id ? '...' : 'Pagar'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           
-          <div className="form-group">
-            <label>Monto del Abono ({shopSettings.currency})</label>
-            <input 
-              type="number" 
-              className="form-control" 
-              placeholder="0.00" 
-              step="0.01"
-              max={selectedCustomer?.debtBalance}
-              required
-              autoFocus
-              value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Método de Pago</label>
-            <select 
-              className="form-control"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            >
-              <option value="Efectivo">Efectivo</option>
-              <option value="Tarjeta">Tarjeta / Transferencia</option>
-            </select>
-          </div>
-
           <div className="modal-actions">
-            <button type="button" className="btn-outline" onClick={closePortal}>Cancelar</button>
-            <button type="submit" className="btn-primary">Confirmar Pago</button>
+            <button type="button" className="btn-outline" onClick={closePortal}>Cerrar</button>
           </div>
-        </form>
+        </div>
       </Modal>
     </div>
   );
